@@ -1,3 +1,5 @@
+import 'config';
+
 import express from 'express';
 import helmet from 'helmet';
 import winston from 'winston';
