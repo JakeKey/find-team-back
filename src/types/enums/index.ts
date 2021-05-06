@@ -9,7 +9,11 @@ export enum UserPositions {
 }
 
 export enum Status {
+  OK = 200,
   BAD_REQUEST = 400,
+  UNAUTHORIZED = 401,
+  FORBIDDEN = 403,
+  INTERNAL_SERVER_ERROR = 500,
 }
 
 export enum ErrorCodes {
@@ -17,4 +21,8 @@ export enum ErrorCodes {
   USERNAME_ALREADY_TAKEN = 'USERNAME_ALREADY_TAKEN',
   EMAIL_ALREADY_REGISTERED = 'EMAIL_ALREADY_REGISTERED',
   VALIDATION_ERROR = 'VALIDATION_ERROR',
+}
+
+export enum SuccessCodes {
+  SUCCESS = 'SUCCESS',
 }

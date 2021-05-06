@@ -10,3 +10,5 @@ export interface UserType {
   verified: boolean;
   registered: boolean;
 }
+
+export type RegisterReqBody = Pick<UserType, 'username' | 'password' | 'email' | 'position'>;

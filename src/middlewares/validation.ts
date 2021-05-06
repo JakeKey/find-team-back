@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AnySchema } from 'joi';
 
 import { ErrorCodes, Status } from 'types/enums';
+import { formatError } from 'utils';
 
 type ValidationObject = Partial<Record<'body' | 'params' | 'query', AnySchema>>;
 
@@ -21,7 +22,7 @@ export const validation = (schema: ValidationObject) => (
   const errors = { ...result.body?.error, ...result.params?.error, ...result.query?.error };
 
   if (Object.keys(errors).length) {
-    return res.status(Status.BAD_REQUEST).send(ErrorCodes.VALIDATION_ERROR);
+    return res.status(Status.BAD_REQUEST).send(formatError(ErrorCodes.VALIDATION_ERROR));
   } else {
     next();
   }

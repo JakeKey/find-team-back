@@ -1,14 +1,24 @@
 import 'config';
 
 import express from 'express';
+import cors from 'cors';
 import helmet from 'helmet';
 import winston from 'winston';
 import expressWinston from 'express-winston';
 
 import { auth } from 'routes/unprotected';
+import { createDebug } from 'utils';
+
+const debug = createDebug('connect');
 
 const app = express();
 
+app.use(
+  cors({
+    origin: process.env.NODE_FTEAM_FRONT_ORIGIN,
+    optionsSuccessStatus: 200,
+  })
+);
 app.use(helmet());
 app.use(express.json());
 
@@ -30,6 +40,6 @@ app.use(
   })
 );
 
-app.listen(3000, () => {
-  console.log('The application is listening on port 3000!');
+app.listen(process.env.NODE_FTEAM_PORT, () => {
+  debug(`The application is listening on port ${process.env.NODE_FTEAM_PORT}!`);
 });
