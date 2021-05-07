@@ -1,2 +1,2 @@
-export { validation } from './validation';
-export { reCaptchaVerify } from './reCaptchaVerify';
+export * from './validation';
+export * from './reCaptchaVerify';
