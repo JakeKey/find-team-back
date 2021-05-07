@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import Joi from 'joi';
 
 import pool from 'dbconfig';
-import { validation } from 'middlewares';
+import { validation, reCaptchaVerify } from 'middlewares';
 import { createDebug, encryptPassword, formatError, formatResponse } from 'utils';
 import { UserPositions, ErrorCodes, Status } from 'types/enums';
 import { RegisterReqBody } from 'types/interfaces';
@@ -26,9 +26,10 @@ router.post(
         password: Joi.string().min(8).max(128).required(),
         email: Joi.string().email().required(),
         position: Joi.string().valid(...Object.values(UserPositions)),
-        //  TODO add google captcha
+        reCaptchaResponse: Joi.string().required(),
       }),
     }),
+    reCaptchaVerify,
   ],
   async (req: Request<{}, {}, RegisterReqBody>, res: Response) => {
     const { username, password, email, position } = req.body;

@@ -1,5 +1,4 @@
-import 'config';
-
+import { CONFIG_CONSTS } from 'config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -15,7 +14,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: process.env.NODE_FTEAM_FRONT_ORIGIN,
+    origin: CONFIG_CONSTS.NODE_FTEAM_FRONT_ORIGIN,
     optionsSuccessStatus: 200,
   })
 );
@@ -40,6 +39,6 @@ app.use(
   })
 );
 
-app.listen(process.env.NODE_FTEAM_PORT, () => {
-  debug(`The application is listening on port ${process.env.NODE_FTEAM_PORT}!`);
+app.listen(CONFIG_CONSTS.NODE_FTEAM_PORT, () => {
+  debug(`The application is listening on port ${CONFIG_CONSTS.NODE_FTEAM_PORT}!`);
 });

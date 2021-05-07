@@ -1,8 +1,10 @@
 import { Pool } from 'pg';
 
+import { CONFIG_CONSTS } from 'config';
+
 export default new Pool({
   max: 20,
-  connectionString: process.env.NODE_FTEAM_DB_CONNECT,
+  connectionString: CONFIG_CONSTS.NODE_FTEAM_DB_CONNECT,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
 });
