@@ -12,6 +12,9 @@ const debug = createDebug('connect');
 
 const app = express();
 
+debug(`App environment: ${CONFIG_CONSTS.NODE_ENV}`);
+const isTestEnv = CONFIG_CONSTS.NODE_ENV === 'test';
+
 app.use(
   cors({
     origin: CONFIG_CONSTS.NODE_FTEAM_FRONT_ORIGIN,
@@ -21,26 +24,32 @@ app.use(
 app.use(helmet());
 app.use(express.json());
 
-app.use(
-  expressWinston.logger({
-    transports: [new winston.transports.Console()],
-    format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
-    meta: false,
-    msg: 'HTTP {{res.statusCode}} {{req.method}} {{req.url}} {{res.responseTime}}ms',
-  })
-);
+if (!isTestEnv) {
+  app.use(
+    expressWinston.logger({
+      transports: [new winston.transports.Console()],
+      format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
+      meta: false,
+      msg: 'HTTP {{res.statusCode}} {{req.method}} {{req.url}} {{res.responseTime}}ms',
+    })
+  );
+}
 
 app.use('/api/auth', auth);
 
-app.use(
-  expressWinston.errorLogger({
-    transports: [new winston.transports.Console()],
-    format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
-  })
-);
+if (!isTestEnv) {
+  app.use(
+    expressWinston.errorLogger({
+      transports: [new winston.transports.Console()],
+      format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
+    })
+  );
+}
 
 app.listen(CONFIG_CONSTS.NODE_FTEAM_PORT, () => {
   debug(`The application is listening on port ${CONFIG_CONSTS.NODE_FTEAM_PORT}!`);
 });
 
-module.exports = app;
+if (isTestEnv) {
+  module.exports = app;
+}

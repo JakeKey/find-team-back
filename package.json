@@ -6,7 +6,7 @@
   "scripts": {
     "start": "NODE_PATH=./src nodemon",
     "build": "tsc",
-    "test": "NODE_PATH=./src mocha --file src/__tests__/setup.ts -r ts-node/register 'src/__tests__/**/*.spec.ts' --exit"
+    "test": "NODE_PATH=./src NODE_ENV=test mocha --file src/__tests__/setup.ts -r ts-node/register 'src/__tests__/**/*.spec.ts' --exit"
   },
   "repository": {
     "type": "git",
