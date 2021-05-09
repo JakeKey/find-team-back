@@ -2,20 +2,17 @@ import express, { Request, Response } from 'express';
 import Joi from 'joi';
 
 import pool from 'dbconfig';
-import { validation, reCaptchaVerify } from 'middlewares';
+import middlewares from 'middlewares';
 import { createDebug, encryptPassword, formatError, formatResponse } from 'utils';
 import { UserPositions, ErrorCodes, Status } from 'types/enums';
 import { RegisterReqBody } from 'types/interfaces';
+import { checkIfUserExistSQL, CheckIfUserExistSQLType, createUserSQL } from 'sql';
+
+const { validation, reCaptchaVerify } = middlewares;
 
 const debug = createDebug('auth');
 
 const router = express.Router();
-
-interface FindUserSQLType {
-  username: string;
-  email: string;
-  registered: boolean;
-}
 
 router.post(
   '/register',
@@ -37,14 +34,12 @@ router.post(
     try {
       client = await pool.connect();
 
-      const findUserSQL =
-        'SELECT username, email, registered FROM users WHERE username = $1 OR email = $2';
-      const resultFind = await client.query<FindUserSQLType>(findUserSQL, [
+      const resultCheck = await client.query<CheckIfUserExistSQLType>(checkIfUserExistSQL, [
         username,
         email.toLowerCase(),
       ]);
-      debug('Find user result %O', resultFind);
-      const existingUser = !!resultFind?.rows.length && resultFind.rows[0];
+      debug('Find user result %O', resultCheck);
+      const existingUser = !!resultCheck?.rows.length && resultCheck.rows[0];
       if (existingUser && existingUser.registered) {
         return res
           .status(Status.FORBIDDEN)
@@ -57,8 +52,6 @@ router.post(
           );
       }
 
-      const createUserSQL =
-        'INSERT INTO users (username, password, email, position) VALUES ($1, $2, $3, $4)';
       const encryptedPassword = await encryptPassword(password);
       const resultCreate = await client.query(createUserSQL, [
         username,
@@ -69,7 +62,7 @@ router.post(
       debug('Create user result %O', resultCreate);
 
       client.release();
-      return res.status(Status.OK).json(formatResponse());
+      return res.status(Status.CREATED).json(formatResponse());
     } catch (err) {
       debug('Auth register error: %O', err);
       client?.release();

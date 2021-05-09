@@ -5,10 +5,12 @@ export interface UserType {
   username: string;
   password: string;
   email: string;
-  position: UserPositions;
+  position?: UserPositions;
   createdAt: Date;
   verified: boolean;
   registered: boolean;
 }
 
-export type RegisterReqBody = Pick<UserType, 'username' | 'password' | 'email' | 'position'>;
+export type RegisterReqBody = Pick<UserType, 'username' | 'password' | 'email' | 'position'> & {
+  reCaptchaResponse: string;
+};

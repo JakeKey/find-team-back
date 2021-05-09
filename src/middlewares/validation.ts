@@ -6,11 +6,15 @@ import { formatError } from 'utils';
 
 export type ValidationObject = Partial<Record<'body' | 'params' | 'query', AnySchema>>;
 
-export const validation = (schema: ValidationObject) => (
+export const validation = (schema?: ValidationObject) => (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
+  if (!schema) {
+    next();
+    return;
+  }
   const { body, params, query } = schema;
 
   const result = {
@@ -22,7 +26,7 @@ export const validation = (schema: ValidationObject) => (
   const errors = { ...result.body?.error, ...result.params?.error, ...result.query?.error };
 
   if (Object.keys(errors).length) {
-    return res.status(Status.BAD_REQUEST).json(formatError(ErrorCodes.VALIDATION_ERROR));
+    res.status(Status.BAD_REQUEST).json(formatError(ErrorCodes.VALIDATION_ERROR));
   } else {
     next();
   }

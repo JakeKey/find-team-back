@@ -1,10 +1,12 @@
-import { describe, it, afterEach, beforeEach } from 'mocha';
+import { describe, it, beforeEach } from 'mocha';
 import { expect } from 'chai';
 import sinon, { SinonSpy } from 'sinon';
 import { Request, Response } from 'express';
 import Joi, { ValidationResult } from 'joi';
 
-import { validation, ValidationObject } from 'middlewares';
+import middlewares, { ValidationObject } from 'middlewares';
+
+const { validation } = middlewares;
 
 describe('Validation middleware', () => {
   const bodySchema = Joi.object({ test_body: Joi.string().required() });
@@ -16,14 +18,11 @@ describe('Validation middleware', () => {
     query: querySchema,
   };
   const req: Partial<Request> = {
-    body: { test_body: 'test' },
-    params: { test_params: 'test' },
-    query: { test_query: 'test' },
+    body: { test_body: 'test_body' },
+    params: { test_params: 'test_params' },
+    query: { test_query: 'test_query' },
   };
-  let res: Partial<Response>;
-  let next: SinonSpy;
-  let json: SinonSpy;
-  let status: SinonSpy;
+  let res: Partial<Response>, next: SinonSpy, json: SinonSpy, status: SinonSpy;
 
   const fakeValidationResult = (isValid: boolean) => (): ValidationResult => ({
     value: 'test',
@@ -39,6 +38,16 @@ describe('Validation middleware', () => {
       : undefined,
   });
 
+  const getValidationStubs = ({
+    body = true,
+    params = true,
+    query = true,
+  }: Partial<Record<'body' | 'params' | 'query', boolean>>) => {
+    sinon.stub(bodySchema, 'validate').callsFake(fakeValidationResult(body));
+    sinon.stub(paramsSchema, 'validate').callsFake(fakeValidationResult(params));
+    sinon.stub(querySchema, 'validate').callsFake(fakeValidationResult(query));
+  };
+
   beforeEach(() => {
     json = sinon.fake();
     status = sinon.fake.returns({ json });
@@ -46,10 +55,6 @@ describe('Validation middleware', () => {
     res = {
       status,
     };
-  });
-
-  afterEach(() => {
-    sinon.restore();
   });
 
   it('should be a function', () => {
@@ -61,10 +66,8 @@ describe('Validation middleware', () => {
     expect(validationMiddleware).to.be.a('function');
   });
 
-  it('should call next() validation passes', async () => {
-    sinon.stub(bodySchema, 'validate').callsFake(fakeValidationResult(true));
-    sinon.stub(paramsSchema, 'validate').callsFake(fakeValidationResult(true));
-    sinon.stub(querySchema, 'validate').callsFake(fakeValidationResult(true));
+  it('should call next() if each validation pass', async () => {
+    getValidationStubs({});
 
     const validationMiddleware = validation(schema);
     validationMiddleware(req as Request, res as Response, next);
@@ -73,9 +76,7 @@ describe('Validation middleware', () => {
   });
 
   it('should call status() and json() if body validation fails', async () => {
-    sinon.stub(bodySchema, 'validate').callsFake(fakeValidationResult(false));
-    sinon.stub(paramsSchema, 'validate').callsFake(fakeValidationResult(true));
-    sinon.stub(querySchema, 'validate').callsFake(fakeValidationResult(true));
+    getValidationStubs({ body: false });
 
     const validationMiddleware = validation(schema);
     validationMiddleware(req as Request, res as Response, next);
@@ -85,9 +86,7 @@ describe('Validation middleware', () => {
   });
 
   it('should call status() and json() if params validation fails', async () => {
-    sinon.stub(bodySchema, 'validate').callsFake(fakeValidationResult(true));
-    sinon.stub(paramsSchema, 'validate').callsFake(fakeValidationResult(false));
-    sinon.stub(querySchema, 'validate').callsFake(fakeValidationResult(true));
+    getValidationStubs({ params: false });
 
     const validationMiddleware = validation(schema);
     validationMiddleware(req as Request, res as Response, next);
@@ -97,9 +96,7 @@ describe('Validation middleware', () => {
   });
 
   it('should call status() and json() if query validation fails', async () => {
-    sinon.stub(bodySchema, 'validate').callsFake(fakeValidationResult(true));
-    sinon.stub(paramsSchema, 'validate').callsFake(fakeValidationResult(true));
-    sinon.stub(querySchema, 'validate').callsFake(fakeValidationResult(false));
+    getValidationStubs({ query: false });
 
     const validationMiddleware = validation(schema);
     validationMiddleware(req as Request, res as Response, next);
