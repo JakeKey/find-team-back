@@ -1,23 +1,30 @@
 import bcrypt from 'bcrypt';
 import debug from 'debug';
 import fetch from 'node-fetch';
+import jwt from 'jsonwebtoken';
 
 import { CONFIG_CONSTS } from 'config';
 import { ErrorCodes, SuccessCodes } from 'types/enums';
 import { ResponseModel } from 'types/interfaces';
 
-export const formatResponse = (res?: object, code?: SuccessCodes): ResponseModel => ({
-  data: res || {},
-  code: code && Object.values(SuccessCodes).includes(code) ? code : SuccessCodes.SUCCESS,
+export const formatResponse = <T>(data: T, success = SuccessCodes.SUCCESS): ResponseModel<T> => ({
+  data,
+  success,
 });
 
-export const formatError = (code?: ErrorCodes): ResponseModel => ({
-  code: code && Object.values(ErrorCodes).includes(code) ? code : ErrorCodes.SOMETHING_WENT_WRONG,
+export const formatError = (error = ErrorCodes.SOMETHING_WENT_WRONG): ResponseModel<{}> => ({
+  data: {},
+  error,
 });
 
-export const encryptPassword = async (password: string) => {
-  const salt = await bcrypt.genSalt(10);
-  return bcrypt.hash(password, salt);
+export const bcryptHandler = {
+  encrypt: async (password: string) => {
+    const salt = await bcrypt.genSalt(10);
+    return bcrypt.hash(password, salt);
+  },
+  decrypt: async (password: string, hashedPassword: string) => {
+    return bcrypt.compare(password, hashedPassword);
+  },
 };
 
 export const createDebug = (postfix: string) => debug(`fyt:${postfix}`);
@@ -40,4 +47,9 @@ export const postReCaptchaResponse = async (
   });
 
   return responseGoogle.json();
+};
+
+export const generateAuthToken = (id: string | number) => {
+  if (!CONFIG_CONSTS.NODE_FTEAM_JWT_SECRET) return;
+  return jwt.sign({ id }, CONFIG_CONSTS.NODE_FTEAM_JWT_SECRET, { expiresIn: '7d' });
 };

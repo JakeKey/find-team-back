@@ -1,6 +1,7 @@
 import { ErrorCodes, SuccessCodes } from 'types/enums';
 
-export interface ResponseModel {
-  data?: object;
-  code: SuccessCodes | ErrorCodes;
+export interface ResponseModel<T> {
+  data: T;
+  success?: SuccessCodes;
+  error?: ErrorCodes;
 }
