@@ -31,7 +31,6 @@ export const createDebug = (postfix: string) => debug(`fyt:${postfix}`);
 
 interface GoogleReCaptchaResponse {
   success: boolean;
-  // eslint-disable-next-line camelcase
   challenge_ts: Date;
   hostname: string;
   'error-codes': string[];
@@ -52,4 +51,11 @@ export const postReCaptchaResponse = async (
 export const generateAuthToken = (id: string | number) => {
   if (!CONFIG_CONSTS.NODE_FTEAM_JWT_SECRET) return;
   return jwt.sign({ id }, CONFIG_CONSTS.NODE_FTEAM_JWT_SECRET, { expiresIn: '7d' });
+};
+
+export const verificationCode = {
+  create: async () => {
+    const { randomBytes } = await import('crypto');
+    return randomBytes(32).toString('hex');
+  },
 };
