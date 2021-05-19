@@ -16,6 +16,7 @@
     "comma-dangle": "off",
     "curly": "off",
     "indent": "off",
+    "camelcase": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/member-delimiter-style": "off",
     "@typescript-eslint/camelcase": "off",

@@ -3,21 +3,37 @@ import Joi from 'joi';
 
 import pool from 'dbconfig';
 import middlewares from 'middlewares';
-import { createDebug, bcryptHandler, formatError, formatResponse, generateAuthToken } from 'utils';
+import {
+  createDebug,
+  bcryptHandler,
+  formatError,
+  formatResponse,
+  generateAuthToken,
+  mailApi,
+  verificationCode,
+  VERIFICATION_CODE_EXPIRATION_TIME_MINUTES,
+} from 'utils';
 import { UserPositions, ErrorCodes, Status, SuccessCodes } from 'types/enums';
 import {
   RegisterReqBody,
   LoginReqBody,
   LoginResponseData,
   RegisterResponseData,
+  VerifyCodeReqBody,
+  VerifyCodeResponseData,
 } from 'types/interfaces';
 import {
   checkIfUserExistSQL,
   CheckIfUserExistSQLType,
   createUserSQL,
+  registerAnonymousUserSQL,
   getCredentialsByEmailSQL,
   getCredentialsByUsernameSQL,
   GetCredentialsSQLType,
+  createVerificationCodeSQL,
+  verifyCodeSQL,
+  checkIfUserIsVerifiedSQL,
+  verifyUserSQL,
 } from 'sql';
 
 const { validation, reCaptchaVerify } = middlewares;
@@ -41,23 +57,29 @@ router.post(
     reCaptchaVerify,
   ],
   async (req: Request<{}, {}, RegisterReqBody>, res: Response) => {
-    const { username, password, email, position } = req.body;
+    const { username, password, position } = req.body;
+    let { email } = req.body;
+    email = email.toLowerCase();
+
     let client;
     try {
       client = await pool.connect();
 
       const resultCheck = await client.query<CheckIfUserExistSQLType>(checkIfUserExistSQL, [
         username,
-        email.toLowerCase(),
+        email,
       ]);
-      debug('Find user result %O', resultCheck);
+
       const existingUser = !!resultCheck?.rows.length && resultCheck.rows[0];
+      const isEmailAlreadyUsed = existingUser && existingUser.email.toLowerCase() === email;
+      debug('Find user result %O', resultCheck);
+
       if (existingUser && existingUser.registered) {
         return res
           .status(Status.FORBIDDEN)
           .json(
             formatError(
-              email.toLowerCase() === existingUser.email
+              isEmailAlreadyUsed
                 ? ErrorCodes.EMAIL_ALREADY_REGISTERED
                 : ErrorCodes.USERNAME_ALREADY_TAKEN
             )
@@ -65,15 +87,23 @@ router.post(
       }
 
       const encryptedPassword = await bcryptHandler.encrypt(password);
-      const resultCreate = await client.query(createUserSQL, [
-        username,
-        encryptedPassword,
-        email,
-        position,
-      ]);
-      debug('Create user result %O', resultCreate);
 
-      // TODO send verification email
+      const isAnonymousUser = isEmailAlreadyUsed && !resultCheck.rows[0].registered;
+
+      const resultCreate = await client.query<{ id: string }>(
+        !isAnonymousUser ? createUserSQL : registerAnonymousUserSQL,
+        [username, encryptedPassword, email, position]
+      );
+      debug('Create user result %O', resultCreate);
+      const userId = resultCreate.rows[0].id;
+      if (!userId) throw new Error('No user id');
+      const code = await verificationCode.create();
+
+      const resultSaveCode = await client.query(createVerificationCodeSQL, [userId, code]);
+      debug('Save verification code result %O', resultSaveCode);
+
+      const resultSendMail = await mailApi.send(email, username, code);
+      debug('Mail Api verification email send result %O', resultSendMail);
 
       client.release();
       return res
@@ -123,13 +153,79 @@ router.post(
       }
       debug('Correct credentials for user %s, id: %s', username || email, userCredentials.id);
 
-      // TODO check 'verified' flag after adding mail service
+      if (!userCredentials.verified) {
+        return res.status(Status.FORBIDDEN).json(formatError(ErrorCodes.USER_NOT_VERIFIED));
+      }
 
       const token = generateAuthToken(userCredentials.id);
-      if (!token) throw new Error();
+      if (!token) throw new Error('Token not created');
       return res
         .status(Status.OK)
         .json(formatResponse<LoginResponseData>({ token }, SuccessCodes.LOGIN_SUCCESS));
+    } catch (err) {
+      debug('Auth register error: %O', err);
+      client?.release();
+      return res.status(Status.INTERNAL_SERVER_ERROR).json(formatError());
+    }
+  }
+);
+
+router.post(
+  '/verify',
+  [
+    validation({
+      body: Joi.object({
+        code: Joi.string().alphanum().min(10).max(100),
+        reCaptchaResponse: Joi.string().max(2048).required(),
+      }),
+    }),
+    reCaptchaVerify,
+  ],
+  async (req: Request<{}, {}, VerifyCodeReqBody>, res: Response) => {
+    const { code } = req.body;
+
+    let client;
+    try {
+      client = await pool.connect();
+      const resultVerifyCode = await client.query<{ user_id: string; created_at: string }>(
+        verifyCodeSQL,
+        [code]
+      );
+      const userId = resultVerifyCode?.rows[0]?.user_id;
+
+      if (!userId) {
+        return res.status(Status.FORBIDDEN).json(formatError(ErrorCodes.INVALID_VERIFICATION_CODE));
+      }
+
+      const createdAt = resultVerifyCode?.rows[0]?.created_at;
+      const timeFromCreationMs = createdAt && Date.now() - new Date(createdAt).getTime();
+      const timeFromCreationMinutes = timeFromCreationMs && timeFromCreationMs / 1000 / 60;
+      if (
+        !timeFromCreationMinutes ||
+        timeFromCreationMinutes > VERIFICATION_CODE_EXPIRATION_TIME_MINUTES
+      ) {
+        return res.status(Status.FORBIDDEN).json(formatError(ErrorCodes.VERIFICATION_CODE_EXPIRED));
+      }
+
+      const resultCheckIsVerified = await client.query<{ verified: boolean }>(
+        checkIfUserIsVerifiedSQL,
+        [userId]
+      );
+      if (!resultCheckIsVerified?.rows[0]) throw new Error('User not found');
+      const verified = resultCheckIsVerified?.rows[0]?.verified;
+
+      if (verified) {
+        return res.status(Status.BAD_REQUEST).json(formatError(ErrorCodes.USER_ALREADY_VERIFIED));
+      }
+
+      const resultVerifyUser = await client.query(verifyUserSQL, [userId]);
+      debug('Verify user result: %O', resultVerifyUser);
+
+      const token = generateAuthToken(userId);
+      if (!token) throw new Error('Token not created');
+      return res
+        .status(Status.OK)
+        .json(formatResponse<VerifyCodeResponseData>({ token }, SuccessCodes.VERIFICATION_SUCCESS));
     } catch (err) {
       debug('Auth register error: %O', err);
       client?.release();

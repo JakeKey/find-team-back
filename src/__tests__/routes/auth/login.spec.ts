@@ -11,13 +11,14 @@ import { bcryptHandler } from 'utils';
 describe('Login route', () => {
   let connectStubVar: SinonStub, server: any, getCredentialsStub: SinonStub, decryptStub: SinonStub;
 
-  const getCredentialsQueryResult = (id?: number, registered = true) =>
+  const getCredentialsQueryResult = (id?: number, registered = true, verified = true) =>
     id
       ? fakeQueryResult<GetCredentialsSQLType>([
           {
             id,
             password: 'test_password',
             registered,
+            verified,
           },
         ])
       : fakeQueryResult<undefined>([]);
@@ -31,6 +32,7 @@ describe('Login route', () => {
 
   beforeEach(() => {
     stubMiddlewares(sinon);
+
     const { connectStub, queryStub } = stubConnectPool();
     connectStubVar = connectStub;
     getCredentialsStub = queryStub.onFirstCall();
@@ -101,6 +103,22 @@ describe('Login route', () => {
         expect(err).to.be.a('null');
         expect(res).to.have.status(Status.FORBIDDEN);
         expect(res.body).to.include({ error: ErrorCodes.INVALID_CREDENTIALS });
+        done();
+      });
+  });
+
+  it('should send status 403 and proper ErrorCode if user was found and is registered but not verified', (done) => {
+    getCredentialsStub.resolves(getCredentialsQueryResult(1, true, false));
+    decryptStub.resolves(true);
+
+    chai
+      .request(server)
+      .post('/api/auth/login')
+      .send(testValues)
+      .end((err, res) => {
+        expect(err).to.be.a('null');
+        expect(res).to.have.status(Status.FORBIDDEN);
+        expect(res.body).to.include({ error: ErrorCodes.USER_NOT_VERIFIED });
         done();
       });
   });

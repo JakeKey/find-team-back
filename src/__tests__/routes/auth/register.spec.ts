@@ -11,6 +11,7 @@ describe('Register route', () => {
   let connectStubVar: SinonStub,
     checkUserQueryStub: SinonStub,
     createUserQueryStub: SinonStub,
+    saveVerificationCodeQueryStub: SinonStub,
     server: any;
 
   const checkUserQueryResult = (username?: string, email?: string) =>
@@ -38,13 +39,15 @@ describe('Register route', () => {
     connectStubVar = connectStub;
     checkUserQueryStub = queryStub.onFirstCall();
     createUserQueryStub = queryStub.onSecondCall();
+    saveVerificationCodeQueryStub = queryStub.onThirdCall();
 
     server = require('index');
   });
 
   it('should send status 201 if user does not exist', (done) => {
     checkUserQueryStub.resolves(checkUserQueryResult());
-    createUserQueryStub.resolves({});
+    createUserQueryStub.resolves(fakeQueryResult([{ id: 1 }]));
+    saveVerificationCodeQueryStub.resolves(fakeQueryResult([]));
 
     chai
       .request(server)
@@ -59,7 +62,8 @@ describe('Register route', () => {
 
   it('should send status 403 and proper ErrorCode if username already exists', (done) => {
     checkUserQueryStub.resolves(checkUserQueryResult(testValues.username));
-    createUserQueryStub.resolves({});
+    createUserQueryStub.resolves(fakeQueryResult([{ id: 1 }]));
+    saveVerificationCodeQueryStub.resolves(fakeQueryResult([]));
 
     chai
       .request(server)
@@ -75,7 +79,8 @@ describe('Register route', () => {
 
   it('should send status 403 and proper ErrorCode if email already exists', (done) => {
     checkUserQueryStub.resolves(checkUserQueryResult(testValues.username, testValues.email));
-    createUserQueryStub.resolves({});
+    createUserQueryStub.resolves(fakeQueryResult([{ id: 1 }]));
+    saveVerificationCodeQueryStub.resolves(fakeQueryResult([]));
 
     chai
       .request(server)
@@ -92,7 +97,8 @@ describe('Register route', () => {
   it('should send status 500 if pool.connect() throws', (done) => {
     connectStubVar.rejects();
     checkUserQueryStub.resolves(checkUserQueryResult());
-    createUserQueryStub.resolves({});
+    createUserQueryStub.resolves(fakeQueryResult([{ id: 1 }]));
+    saveVerificationCodeQueryStub.resolves(fakeQueryResult([]));
 
     chai
       .request(server)
@@ -105,9 +111,10 @@ describe('Register route', () => {
       });
   });
 
-  it('should send status 500 if first client.query() throws', (done) => {
+  it('should send status 500 if check user query throws', (done) => {
     checkUserQueryStub.throws();
-    createUserQueryStub.resolves({});
+    createUserQueryStub.resolves(fakeQueryResult([{ id: 1 }]));
+    saveVerificationCodeQueryStub.resolves(fakeQueryResult([]));
 
     chai
       .request(server)
@@ -120,9 +127,26 @@ describe('Register route', () => {
       });
   });
 
-  it('should send status 500 if second client.query() throws', (done) => {
+  it('should send status 500 if create user query throws', (done) => {
     checkUserQueryStub.resolves(checkUserQueryResult());
     createUserQueryStub.throws();
+    saveVerificationCodeQueryStub.resolves(fakeQueryResult([]));
+
+    chai
+      .request(server)
+      .post('/api/auth/register')
+      .send(testValues)
+      .end((err, res) => {
+        expect(err).to.be.a('null');
+        expect(res).to.have.status(Status.INTERNAL_SERVER_ERROR);
+        done();
+      });
+  });
+
+  it('should send status 500 if save verification code query throws', (done) => {
+    checkUserQueryStub.resolves(checkUserQueryResult());
+    createUserQueryStub.resolves(fakeQueryResult([{ id: 1 }]));
+    saveVerificationCodeQueryStub.throws();
 
     chai
       .request(server)

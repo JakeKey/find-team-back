@@ -14,3 +14,7 @@ export type LoginReqBody = Pick<UserType, 'password'> &
 export type RegisterResponseData = null;
 
 export type LoginResponseData = { token: string };
+
+export type VerifyCodeReqBody = { code: string } & ReCaptchaReq;
+
+export type VerifyCodeResponseData = { token: string };
