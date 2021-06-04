@@ -9,6 +9,11 @@ export const stubMiddlewares = (sinon: SinonStatic) => {
   const fakeMiddleware = async (req: Request, res: Response, next: NextFunction) => next();
   sinon.stub(middlewares, 'validation').callsFake(() => fakeMiddleware);
   sinon.stub(middlewares, 'reCaptchaVerify').callsFake(fakeMiddleware);
+  const fakeAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+    req.params.userId = '1';
+    next();
+  };
+  sinon.stub(middlewares, 'authorise').callsFake(fakeAuthMiddleware);
 };
 
 export const stubConnectPool = () => {

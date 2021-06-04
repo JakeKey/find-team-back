@@ -48,9 +48,20 @@ export const postReCaptchaResponse = async (
   return responseGoogle.json();
 };
 
-export const generateAuthToken = (id: string | number) => {
-  if (!CONFIG_CONSTS.NODE_FTEAM_JWT_SECRET) return;
-  return jwt.sign({ id }, CONFIG_CONSTS.NODE_FTEAM_JWT_SECRET, { expiresIn: '7d' });
+interface TokenDecodedType {
+  id: string | number;
+}
+
+export const tokenJWT = {
+  generate: (id: string | number) => {
+    if (!CONFIG_CONSTS.NODE_FTEAM_JWT_SECRET) return;
+    const token: TokenDecodedType = { id };
+    return jwt.sign(token, CONFIG_CONSTS.NODE_FTEAM_JWT_SECRET, { expiresIn: '7d' });
+  },
+  verify: (token: string): Partial<TokenDecodedType> & (object | string) => {
+    if (!CONFIG_CONSTS.NODE_FTEAM_JWT_SECRET) return {};
+    return jwt.verify(token, CONFIG_CONSTS.NODE_FTEAM_JWT_SECRET);
+  },
 };
 
 export const verificationCode = {
@@ -59,3 +70,5 @@ export const verificationCode = {
     return randomBytes(32).toString('hex');
   },
 };
+
+export const areArrayElementsUnique = (arr: unknown[]) => [...new Set(arr)].length === arr.length;

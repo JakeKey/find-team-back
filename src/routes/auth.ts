@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import Joi from 'joi';
+import { PoolClient } from 'pg';
 
 import pool from 'dbconfig';
 import middlewares from 'middlewares';
@@ -8,7 +9,7 @@ import {
   bcryptHandler,
   formatError,
   formatResponse,
-  generateAuthToken,
+  tokenJWT,
   mailApi,
   verificationCode,
   VERIFICATION_CODE_EXPIRATION_TIME_MINUTES,
@@ -61,7 +62,7 @@ router.post(
     let { email } = req.body;
     email = email.toLowerCase();
 
-    let client;
+    let client: PoolClient | undefined;
     try {
       client = await pool.connect();
 
@@ -137,7 +138,7 @@ router.post(
     if (!username && !email) {
       return res.status(Status.UNAUTHORIZED).json(formatError(ErrorCodes.MISSING_CREDENTIALS));
     }
-    let client;
+    let client: PoolClient | undefined;
     try {
       client = await pool.connect();
       const resultCheck = await client.query<GetCredentialsSQLType>(
@@ -157,7 +158,7 @@ router.post(
         return res.status(Status.FORBIDDEN).json(formatError(ErrorCodes.USER_NOT_VERIFIED));
       }
 
-      const token = generateAuthToken(userCredentials.id);
+      const token = tokenJWT.generate(userCredentials.id);
       if (!token) throw new Error('Token not created');
       return res
         .status(Status.OK)
@@ -184,7 +185,7 @@ router.post(
   async (req: Request<{}, {}, VerifyCodeReqBody>, res: Response) => {
     const { code } = req.body;
 
-    let client;
+    let client: PoolClient | undefined;
     try {
       client = await pool.connect();
       const resultVerifyCode = await client.query<{ user_id: string; created_at: string }>(
@@ -221,7 +222,7 @@ router.post(
       const resultVerifyUser = await client.query(verifyUserSQL, [userId]);
       debug('Verify user result: %O', resultVerifyUser);
 
-      const token = generateAuthToken(userId);
+      const token = tokenJWT.generate(userId);
       if (!token) throw new Error('Token not created');
       return res
         .status(Status.OK)

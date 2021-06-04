@@ -136,7 +136,7 @@ describe('Verify route', () => {
       });
   });
 
-  it('should send status 500 if check if pool.connect() throws throws', (done) => {
+  it('should send status 500 if check if pool.connect() throws', (done) => {
     connectStubVar.rejects();
     verifyCodeStub.resolves(fakeQueryResult([{ user_id: 1, created_at: Date.now() - 1000 }]));
     checkIfIsAlreadyVerifiedStub.resolves(fakeQueryResult([{ verified: false }]));

@@ -1,3 +1,4 @@
+import { ProjectType } from './project';
 import { UserType } from './user';
 
 type ReCaptchaReq = {
@@ -18,3 +19,13 @@ export type LoginResponseData = { token: string };
 export type VerifyCodeReqBody = { code: string } & ReCaptchaReq;
 
 export type VerifyCodeResponseData = { token: string };
+
+export type CreateProjectReqBody = Pick<ProjectType, 'name' | 'description' | 'positions'>;
+
+export type GetProjectByIdQueryParams = Pick<ProjectType, 'id'>;
+
+export type GetProjectResponseData = ProjectType & {
+  authorName: string;
+};
+
+export type CreateProjectResponseData = null;
