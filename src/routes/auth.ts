@@ -76,6 +76,7 @@ router.post(
       debug('Find user result %O', resultCheck);
 
       if (existingUser && existingUser.registered) {
+        client.release();
         return res
           .status(Status.FORBIDDEN)
           .json(
@@ -150,11 +151,13 @@ router.post(
       const areCredentialsCorrect =
         userCredentials && (await bcryptHandler.decrypt(password, userCredentials.password));
       if (!userCredentials?.registered || !areCredentialsCorrect) {
+        client.release();
         return res.status(Status.FORBIDDEN).json(formatError(ErrorCodes.INVALID_CREDENTIALS));
       }
       debug('Correct credentials for user %s, id: %s', username || email, userCredentials.id);
 
       if (!userCredentials.verified) {
+        client.release();
         return res.status(Status.FORBIDDEN).json(formatError(ErrorCodes.USER_NOT_VERIFIED));
       }
 
@@ -195,6 +198,7 @@ router.post(
       const userId = resultVerifyCode?.rows[0]?.user_id;
 
       if (!userId) {
+        client.release();
         return res.status(Status.FORBIDDEN).json(formatError(ErrorCodes.INVALID_VERIFICATION_CODE));
       }
 
@@ -205,6 +209,7 @@ router.post(
         !timeFromCreationMinutes ||
         timeFromCreationMinutes > VERIFICATION_CODE_EXPIRATION_TIME_MINUTES
       ) {
+        client.release();
         return res.status(Status.FORBIDDEN).json(formatError(ErrorCodes.VERIFICATION_CODE_EXPIRED));
       }
 
@@ -216,6 +221,7 @@ router.post(
       const verified = resultCheckIsVerified?.rows[0]?.verified;
 
       if (verified) {
+        client.release();
         return res.status(Status.BAD_REQUEST).json(formatError(ErrorCodes.USER_ALREADY_VERIFIED));
       }
 

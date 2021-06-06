@@ -33,6 +33,7 @@ export enum ErrorCodes {
   USER_NOT_VERIFIED = 'USER_NOT_VERIFIED',
   UNAUTHORIZED = 'UNAUTHORIZED',
   NOT_FOUND = 'NOT_FOUND',
+  BAD_REQUEST = 'BAD_REQUEST',
 }
 
 export enum SuccessCodes {

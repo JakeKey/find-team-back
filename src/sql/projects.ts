@@ -1,4 +1,4 @@
-import { PositionType, ProjectType, UserType } from 'types/interfaces';
+import { PositionType, ProjectType } from 'types/interfaces';
 
 export const createProjectSQL =
   'INSERT INTO projects (owner_id, name, description) VALUES ($1, $2, $3) RETURNING id';
@@ -6,17 +6,27 @@ export const createProjectSQL =
 export const createProjectPositionsSQL =
   'INSERT INTO project_needed_positions (project_id, user_position, count) VALUES ($1, $2, $3)';
 
-export type GetProjectsSQLType = Omit<ProjectType, 'positions' | 'users'> &
-  Pick<UserType, 'username'>;
+export type GetProjectsSQLType = Omit<ProjectType, 'positions' | 'users'> & { authorname: string };
 
 export const getProjectByIdSQL =
-  'SELECT projects.*, users.username FROM projects JOIN users ON users.id = projects.owner_id WHERE projects.id = $1';
+  'SELECT projects.*, users.username as authorname FROM projects JOIN users ON users.id = projects.owner_id WHERE projects.id = $1';
 
 export type GetProjectsPositionsSQLType = PositionType;
 
 export const getProjectPositionsSQL =
   'SELECT user_position, count FROM project_needed_positions WHERE project_id = $1';
 
-// DELETE IT
-export const updateProjectPositionsSQL =
-  'UPDATE project_needed_positions SET user_position = $2, count = $3 WHERE project_id = $1';
+export const getAllProjectsSQL = (id?: number) => `
+    SELECT projects.id, projects.name, projects.description, projects.created_at, users.username as authorname
+    FROM projects 
+    JOIN users ON users.id = projects.owner_id 
+    ${id ? 'WHERE projects.id <= $3' : ''}
+    ORDER BY projects.created_at DESC
+    OFFSET $1 ROWS
+    LIMIT $2 
+  `;
+
+export type GetAllProjectsSQLType = Pick<
+  ProjectType,
+  'id' | 'name' | 'description' | 'createdAt' | 'ownerId'
+> & { authorname: string };

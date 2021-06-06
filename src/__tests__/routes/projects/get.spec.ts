@@ -3,9 +3,8 @@ import chai, { expect } from 'chai';
 import sinon, { SinonStub } from 'sinon';
 
 import { fakeQueryResult, stubConnectPool, stubMiddlewares } from '__tests__';
-import { GetProjectByIdQueryParams } from 'types/interfaces';
-import { Status } from 'types/enums';
-import { GetProjectsSQLType } from 'sql/projects';
+import { Status, UserPositions } from 'types/enums';
+import { GetProjectsSQLType, GetProjectsPositionsSQLType } from 'sql';
 
 describe('Project Get route', () => {
   let connectStubVar: SinonStub,
@@ -13,18 +12,18 @@ describe('Project Get route', () => {
     getProjectStub: SinonStub,
     getProjectPositionsStub: SinonStub;
 
-  const testValues: GetProjectByIdQueryParams = {
-    id: 1,
-  };
-
-  const testGetProjectResponse: GetProjectsSQLType = {
-    username: 'Test Author',
+  const testGetProjectResponse: Omit<GetProjectsSQLType, 'createdAt'> = {
+    authorname: 'Test Author',
     name: 'Test Projects',
     description: 'Test Descriptions',
     id: 1,
     ownerId: 1,
-    createdAt: new Date(),
   };
+
+  const testGetProjectPositionsResponse: GetProjectsPositionsSQLType[] = [
+    { position: UserPositions.frontend, count: 2 },
+    { position: UserPositions.PO, count: 1 },
+  ];
 
   beforeEach(() => {
     stubMiddlewares(sinon);
@@ -39,15 +38,19 @@ describe('Project Get route', () => {
 
   it('should send status 200 if Get Project and Get Project Positions queries resolves', (done) => {
     getProjectStub.resolves(fakeQueryResult([testGetProjectResponse]));
-    getProjectPositionsStub.resolves(fakeQueryResult([]));
+    getProjectPositionsStub.resolves(fakeQueryResult(testGetProjectPositionsResponse));
 
     chai
       .request(server)
-      .get('/api/projects')
-      .query(testValues)
+      .get('/api/projects/1')
       .end((err, res) => {
         expect(err).to.be.a('null');
         expect(res).to.have.status(Status.OK);
+        expect(res.body).to.haveOwnProperty('data');
+        expect(res.body.data).to.deep.include({
+          ...testGetProjectResponse,
+          positions: testGetProjectPositionsResponse,
+        });
         done();
       });
   });
@@ -58,8 +61,7 @@ describe('Project Get route', () => {
 
     chai
       .request(server)
-      .get('/api/projects')
-      .query(testValues)
+      .get('/api/projects/4')
       .end((err, res) => {
         expect(err).to.be.a('null');
         expect(res).to.have.status(Status.INTERNAL_SERVER_ERROR);
@@ -73,8 +75,7 @@ describe('Project Get route', () => {
 
     chai
       .request(server)
-      .get('/api/projects')
-      .query(testValues)
+      .get('/api/projects/2')
       .end((err, res) => {
         expect(err).to.be.a('null');
         expect(res).to.have.status(Status.INTERNAL_SERVER_ERROR);
@@ -89,8 +90,7 @@ describe('Project Get route', () => {
 
     chai
       .request(server)
-      .get('/api/projects')
-      .query(testValues)
+      .get('/api/projects/3')
       .end((err, res) => {
         expect(err).to.be.a('null');
         expect(res).to.have.status(Status.INTERNAL_SERVER_ERROR);

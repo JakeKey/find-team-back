@@ -9,8 +9,9 @@ import { mailApi } from 'utils';
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-beforeEach(() => {
+beforeEach(function () {
   sinon.stub(mailApi, 'send').callsFake(async () => {});
+  this.timeout(3000);
 });
 
 afterEach(() => {
