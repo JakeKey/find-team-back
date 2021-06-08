@@ -3,6 +3,7 @@ export enum UserPositions {
   backend = 'backend',
   fullstack = 'fullstack',
   designer = 'designer',
+  devops = 'devops',
   PM = 'PM',
   PO = 'PO',
   other = 'other',

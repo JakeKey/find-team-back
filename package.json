@@ -5,6 +5,7 @@
   "main": "build/index.js",
   "scripts": {
     "start": "NODE_PATH=./src nodemon",
+    "start-prod": "NODE_PATH=./build nodemon ./build/index.js",
     "build": "tsc",
     "test": "NODE_PATH=./src NODE_ENV=test mocha --file src/__tests__/setup.ts -r ts-node/register 'src/__tests__/**/*.spec.ts' --exit"
   },

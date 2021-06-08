@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  fteam-back:
+    container_name: fteam-back
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    depends_on:
+      - postgres-db
+    env_file:
+      - .env
+    ports:
+      - ${NODE_FTEAM_PORT}:${NODE_FTEAM_PORT}
+
+  postgres-db:
+    container_name: postgres-db
+    image: postgres:13
+    volumes:
+      - ~/postgresdata:/var/lib/postgresql/data
+      - ./src/migrations/dbinit.sql:/docker-entrypoint-initdb.d/dbinit.sql
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - ${NODE_FTEAM_DB_PORT}:5432
+
+networks:
+  backend:
