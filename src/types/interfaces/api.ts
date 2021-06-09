@@ -1,6 +1,7 @@
 import { GetAllProjectsSQLType } from 'sql';
 import { UserPositions } from 'types/enums';
 
+import { ProfileType } from './profile';
 import { ProjectType } from './project';
 import { UserType } from './user';
 
@@ -41,3 +42,5 @@ export type GetProjectResponseData = ProjectType & {
 export type GetAllProjectsResponseData = GetAllProjectsSQLType[];
 
 export type CreateProjectResponseData = null;
+
+export type GetProfileResponseData = ProfileType;

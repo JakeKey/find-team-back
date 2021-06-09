@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import winston from 'winston';
 import expressWinston from 'express-winston';
 
-import { auth, projects } from 'routes';
+import { auth, projects, profile } from 'routes';
 import { createDebug } from 'utils';
 
 const debug = createDebug('connect');
@@ -36,6 +36,7 @@ if (!isTestEnv) {
 }
 
 app.use('/api/auth', auth);
+app.use('/api/profile', profile);
 app.use('/api/projects', projects);
 
 if (!isTestEnv) {
