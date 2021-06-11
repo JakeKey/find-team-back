@@ -4,7 +4,7 @@ import { PoolClient } from 'pg';
 import pool from 'dbconfig';
 import middlewares from 'middlewares';
 import { createDebug, formatError, formatResponse } from 'utils';
-import { Status } from 'types/enums';
+import { Status, SuccessCodes } from 'types/enums';
 import { GetProfileResponseData } from 'types/interfaces';
 import { getProfileSQL } from 'sql';
 
@@ -25,7 +25,9 @@ router.get('/', [authorise], async (req: Request<{ userId: number }, {}, {}>, re
     const profile = resultGetProfile.rows[0];
 
     client.release();
-    res.status(Status.OK).json(formatResponse<GetProfileResponseData>(profile));
+    res
+      .status(Status.OK)
+      .json(formatResponse<GetProfileResponseData>(profile, SuccessCodes.PROFILE_DATA_RECEIVED));
   } catch (err) {
     debug('Get Profile error: %O', err);
     client?.release();

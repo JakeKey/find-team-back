@@ -41,6 +41,6 @@ export type GetProjectResponseData = ProjectType & {
 
 export type GetAllProjectsResponseData = GetAllProjectsSQLType[];
 
-export type CreateProjectResponseData = null;
+export type CreateProjectResponseData = { id: number };
 
 export type GetProfileResponseData = ProfileType;

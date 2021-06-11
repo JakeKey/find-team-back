@@ -14,7 +14,7 @@ export const getProjectByIdSQL =
 export type GetProjectsPositionsSQLType = PositionType;
 
 export const getProjectPositionsSQL =
-  'SELECT user_position, count FROM project_needed_positions WHERE project_id = $1';
+  'SELECT user_position as position, count FROM project_needed_positions WHERE project_id = $1';
 
 export const getAllProjectsSQL = (id?: number) => `
     SELECT projects.id, projects.name, projects.description, projects.created_at, users.username as authorname

@@ -63,9 +63,14 @@ router.get(
       const positions = resultGetProjectPositions.rows;
 
       client.release();
-      res.status(Status.OK).json(
-        formatResponse<GetProjectResponseData>({ ...projectData, positions })
-      );
+      res
+        .status(Status.OK)
+        .json(
+          formatResponse<GetProjectResponseData>(
+            { ...projectData, positions },
+            SuccessCodes.PROJECT_DETAILS_RECEIVED
+          )
+        );
     } catch (err) {
       debug('Project get by id error: %O', err);
       client?.release();
@@ -101,7 +106,11 @@ router.get(
       debug('Projects GET all result: %O', resultProjectAll);
       const projects = resultProjectAll.rows;
       client.release();
-      res.status(Status.OK).json(formatResponse<GetAllProjectsResponseData>(projects));
+      res
+        .status(Status.OK)
+        .json(
+          formatResponse<GetAllProjectsResponseData>(projects, SuccessCodes.PROJECTS_LIST_RECEIVED)
+        );
     } catch (err) {
       debug('Projects GET all error: %O', err);
       client?.release();
@@ -171,7 +180,9 @@ router.post(
 
       res
         .status(Status.CREATED)
-        .json(formatResponse<CreateProjectResponseData>(null, SuccessCodes.PROJECT_CREATED));
+        .json(
+          formatResponse<CreateProjectResponseData>({ id: projectId }, SuccessCodes.PROJECT_CREATED)
+        );
     } catch (err) {
       debug('Projects POST error: %O', err);
       client?.release();
