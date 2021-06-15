@@ -1,5 +1,12 @@
 # find-team-back
 
+General idea of this project is to connect people that are looking to participate in development of a 'real life' web applications and software.
+Project is still in development, at the moment basic structure and few simple features has been created.
+Demo:
+find-team.com
+
+# docker
+
 Build and run docker images (api + postgres):
 docker-compose up --build -d
 [on linux os admin privilages required]
