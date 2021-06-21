@@ -23,6 +23,3 @@ services:
       - .env
     ports:
       - ${NODE_FTEAM_DB_PORT}:5432
-
-networks:
-  backend:
