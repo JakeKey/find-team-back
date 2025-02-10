@@ -4,8 +4,6 @@ General idea of this project is to connect people that are looking to participat
 
 Project is still in development, at the moment basic structure and few simple features has been created.
 
-[Demo](https://find-team.com)
-
 # docker
 
 Build and run docker images (api + postgres):
