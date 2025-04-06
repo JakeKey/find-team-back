@@ -21,7 +21,7 @@ describe('Login route', () => {
             verified,
           },
         ])
-      : fakeQueryResult<undefined>([]);
+      : fakeQueryResult([]);
 
   const testValues: LoginReqBody = {
     username: 'test_username',
