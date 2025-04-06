@@ -16,10 +16,12 @@ debug(`App environment: ${CONFIG_CONSTS.NODE_ENV}`);
 const isTestEnv = CONFIG_CONSTS.NODE_ENV === 'test';
 
 app.use(
-  cors({
+  cors(
+{
     origin: CONFIG_CONSTS.NODE_FTEAM_FRONT_ORIGIN,
     optionsSuccessStatus: 200,
-  })
+  }
+)
 );
 app.use(helmet());
 app.use(express.json());
@@ -29,7 +31,7 @@ if (!isTestEnv) {
     expressWinston.logger({
       transports: [new winston.transports.Console()],
       format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
-      meta: false,
+      meta: true,
       msg: 'HTTP {{res.statusCode}} {{req.method}} {{req.url}} {{res.responseTime}}ms',
     })
   );

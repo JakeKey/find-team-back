@@ -52,7 +52,7 @@ router.post(
         password: Joi.string().min(8).max(128).required(),
         email: Joi.string().email().max(128).required(),
         position: Joi.string().valid(...Object.values(UserPositions)),
-        reCaptchaResponse: Joi.string().max(2048).required(),
+        reCaptchaResponse: Joi.string().required(),
       }),
     }),
     reCaptchaVerify,
@@ -129,7 +129,7 @@ router.post(
         username: Joi.string().alphanum().min(3).max(30),
         password: Joi.string().min(8).max(128).required(),
         email: Joi.string().email().max(128),
-        reCaptchaResponse: Joi.string().max(2048).required(),
+        reCaptchaResponse: Joi.string().required(),
       }),
     }),
     reCaptchaVerify,
@@ -180,7 +180,7 @@ router.post(
     validation({
       body: Joi.object({
         code: Joi.string().alphanum().min(10).max(100),
-        reCaptchaResponse: Joi.string().max(2048).required(),
+        reCaptchaResponse: Joi.string().required(),
       }),
     }),
     reCaptchaVerify,
