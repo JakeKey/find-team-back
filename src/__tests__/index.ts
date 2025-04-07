@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import sinon, { SinonStatic } from 'sinon';
 
 import middlewares from 'middlewares';
-import { PoolClient, QueryResult } from 'pg';
+import { PoolClient, QueryResult, QueryResultRow } from 'pg';
 import pool from 'dbconfig';
 
 export const stubMiddlewares = (sinon: SinonStatic) => {
@@ -32,6 +32,6 @@ export const stubConnectPool = () => {
   };
 };
 
-export const fakeQueryResult = <T>(rows: T[]): Partial<QueryResult<T>> => ({
+export const fakeQueryResult = <T extends QueryResultRow>(rows: T[]): Partial<QueryResult<T>> => ({
   rows,
 });

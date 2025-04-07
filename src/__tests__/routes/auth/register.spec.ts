@@ -23,7 +23,7 @@ describe('Register route', () => {
             registered: true,
           },
         ])
-      : fakeQueryResult<undefined>([]);
+      : fakeQueryResult([]);
 
   const testValues: RegisterReqBody = {
     username: 'test_username',
