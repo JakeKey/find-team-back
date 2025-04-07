@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   fteam-back:
     container_name: fteam-back
